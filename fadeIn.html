@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+		<style>
+			*{
+				margin: 0;
+				padding: 0;
+			}
+			html,body{
+				height: 100%;
+				width: 100%;
+			}
+			#root{
+				height: 500px;
+				width: 100%;
+				overflow: hidden;
+			}
+			#root>div{
+				height: 500px;
+				width: 100%;
+				position: relative;
+			}
+			#root>div>div{
+				  height:  500px;
+				  width: 100%;
+				  position: relative;
+				  left: 0;
+				  top: 0;
+			}
+			#root img{
+				display: block;
+				height: 500px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="root">
+			<div id="list">
+				<div style="background: #21374B;"><img src="static/img/parcel.png"/></div>
+				<div style="background: #808080;"><img src="static/img/webpack.png"/></div>
+				<div style="background: #35495E;"><img src="static/img/vue.png"/></div>
+				<div style="background: #0E0E0E;"><img src="static/img/react.png"/> </div>
+			</div>
+		</div>
+		<div id="btns">
+			<button>点击切换到第0个</button>
+			<button>点击切换到第1个</button>
+			<button>点击切换到第2个</button>
+			<button>点击切换到第3个</button>
+		</div>
+	</body>
+	<script>
+		window.onload = function(){
+			const swiper = new Swiper({
+				root:"#root",
+				effect:"fade",
+				loop:true,
+				auto:false,
+				direction:"horizontal",//"horizontal""vertical"
+				index:0,//默认第一张
+				callBack:function(index){
+					console.log("html",index)
+				}
+			})
+			const btnList = document.getElementById("btns").getElementsByTagName("button");
+			
+			[].slice.call(btnList).forEach((dom,i)=>{
+				(function (i){
+					dom.onclick = function(){
+						swiper.moveTo(i)
+					}
+				})(i)
+			})
+			const list = document.getElementById("list").getElementsByTagName("div");
+			[].slice.call(list).forEach((dom,i)=>{
+				(function (i){
+					dom.onclick = function(){
+						console.log(i)
+					}
+				})(i)
+			})
+			
+		}
+	</script>
+</html>
