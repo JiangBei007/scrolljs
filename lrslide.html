@@ -56,7 +56,9 @@
 			line-height: 34px;
 			color: #000;
 			}
-
+			.scroller-item-selected{
+				color: #2f86f6;
+			}
 			.scroller-indicator {
 			width: 100%;
 			height: 34px;
@@ -99,7 +101,7 @@
 			}
 			new Scroll("#root",{
 				data:data,
-				defaultValue:"2013",
+				defaultValue:"",
 				onSelect(val){
 					console.log(val)
 				}

@@ -179,7 +179,6 @@ const TEMPLATE = `
 		    Animate.stop(self.__isDecelerating)
 		    self.__isDecelerating = false
 		  }
-		
 		  top = Math.round((top / self.__itemHeight).toFixed(5)) * self.__itemHeight
 		  top = Math.max(Math.min(self.__maxScrollDistance, top), self.__minScrollDistance)
 		  if (top === self.__scrollPosition || !animate) {
@@ -321,8 +320,8 @@ const TEMPLATE = `
 		__startDeceleration (timeStamp) {
 			var self = this
 			
-			var step = function (percent, now, render) {
-			  self.__stepThroughDeceleration(render)
+			var step = function () {
+			  self.__stepThroughDeceleration()
 			}
 			
 			var minVelocityToKeepDecelerating = 0.5
@@ -362,7 +361,7 @@ const TEMPLATE = `
 			    self.__decelerationVelocity = 0
 			  }
 			} else {
-			  self.__decelerationVelocity *= 0.95
+			  self.__decelerationVelocity *= 0.98
 			}
 			
 			self.__publish(scrollDistance)
@@ -381,7 +380,7 @@ const TEMPLATE = `
 			var oldDistance = self.__scrollPosition
 			var diffDistance = top - oldDistance
 			
-			var step = function (percent, now, render) {
+			var step = function (percent) {
 			  self.__scrollPosition = oldDistance + (diffDistance * percent)
 			  // Push values out
 			  if (self.__callback) {
@@ -393,11 +392,12 @@ const TEMPLATE = `
 			  return self.__isAnimating === id
 			}
 			
-			var completed = function (renderedFramesPerSecond, animationId, wasFinished) {
+			var completed = function ( animationId, wasFinished) {
 			  if (animationId === self.__isAnimating) {
 			    self.__isAnimating = false
 			  }
-				 if (self.__didDecelerationComplete) {
+				 if (self.__didDecelerationComplete || wasFinished) {
+					
 					self.__scrollingComplete()
 				}
 			}
