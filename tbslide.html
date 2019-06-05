@@ -14,73 +14,73 @@
 				width: 100%;
 			}
 			#root{
-				height: 500px;
+				height: 100%;
 				width: 100%;
+				overflow: scroll;
+			}
+			#root .scroller-component{
 				overflow: hidden;
-				background: moccasin;
+				margin-top: -100px;
 			}
-			#root>div{
-				height: 500px;
-				width: 100%;
+			#root .scroller-component .scroller-pulldown{
+				height: 100px;
+				line-height: 100px;
+				text-align: center;
 			}
-			#root>div>div{
-				  height:  500px;
-				  width: 100%;
-				  line-height: 500px;
-				  text-align: center;
-				  display: flex;
-				  justify-content: center;
+			#root .scroller-component .scroller-pullup{
+				height: 100px;
+				line-height: 100px;
+				text-align: center;
 			}
-			
-			#root img{
-				align-items: center;
-				display: block;
-				height: 500px;
-				max-width:100%;
+			#root .scroller-component .scroller-view{
+				
 			}
-			
+			#root .scroller-component .scroller-view li{
+				height: 100px;
+				line-height: 100px;
+				text-align: center;
+				border-top: 1px solid #3399CC;
+				border-bottom: 1px solid #3399CC;
+			}
 		</style>
 	</head>
 	<body>
 		<div id="root">
-			<div>
-				<div style="background: #21374B;"><img src="static/img/parcel.png"/></div>
-				<div style="background: #808080;"><img src="static/img/webpack.png"/></div>
-				<div style="background: #35495E;"><img src="static/img/vue.png"/></div>
-				<div style="background: #0E0E0E;"><img src="static/img/react.png"/> </div>
+			<div class="scroller-component" data-role="component">
+			  <div class="scroller-pulldown" data-role="pulldown">下拉刷新</div>
+			  <div class="scroller-view" data-role="view">
+				  <ul>
+					  <li>1</li>
+					  <li>2</li>
+					  <li>3</li>
+					  <li>4</li>
+					  <li>5</li>
+					  <li>6</li>
+					  <li>7</li>
+					  <li>8</li>
+					  <li>9</li>
+					  <li>10</li>
+					   <li>11</li>
+					  <li>12</li>
+					  <li>13</li>
+					  <li>14</li>
+					  <li>15</li>
+					  <li>16</li>
+					  <li>17</li>
+					  <li>18</li>
+					  <li>19</li>
+					  <li>20</li>
+				  </ul>
+			  </div>
+			  <div class="scroller-pullup" data-role="pullup">上拉加载</div>
 			</div>
-		</div>
-		<div id="btns">
-			<button>点击切换到第0个</button>
-			<button>点击切换到第1个</button>
-			<button>点击切换到第2个</button>
-			<button>点击切换到第3个</button>
 		</div>
 		
 	</body>
 	<script>
 		window.onload = function(){
-			const swiper = new SmallSwiper({
-				root:"#root",
-				loop:true,
-				auto:false,
-				delayed:2000,
-				effect:"slide",
-				direction:"vertical",//"horizontal""vertical"
-				index:0,//默认第一张
-				callBack(index){
-					console.log("html",index)
-					document.title = "我是第"+index+"页"
-				}
-			})
-			const btnList = document.getElementById("btns").getElementsByTagName("button");
-			
-			[].slice.call(btnList).forEach((dom,i)=>{
-				(function (i){
-					dom.onclick = function(){
-						swiper.moveTo(i)
-					}
-				})(i)
+			new Scroll("#root",{
+				
 			})
 		}
 	</script>
