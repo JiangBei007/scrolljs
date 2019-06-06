@@ -18,7 +18,7 @@ function easeInOutCubic (pos) {
   }
   return 0.5 * (Math.pow((pos - 2), 3) + 2)
 }
-
+const MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
 
 	class Scroll{
 		constructor(container, options){
@@ -44,30 +44,23 @@ function easeInOutCubic (pos) {
 			  options = options || {}
 			  self.options = {
 			    itemClass: options.itemClass || 'scroller-item',
-			    onSelect :options.onSelect||function(){},
-			    defaultValue: options.defaultValue||0,
-			    data: options.data||[]
+			    pulldown :options.pulldowncallBack||function(){},
+			    pullup :options.pullupcallBack||function(){},
 			  }
 			
 			  self.__container = getElement(container)
-			  const component = self.__container.querySelector("[data-role=component]")
-				const pulldown = self.__container.querySelector("[data-role=pulldown]")
-				const view = self.__container.querySelector("[data-role=view]")
-				const pullup = self.__container.querySelector("[data-role=pullup]")
-				
+			  const component = self.__component = self.__container.querySelector("[data-role=component]")
+				self.__pulldown = self.__container.querySelector("[data-role=pulldown]")
+				self.__view = self.__container.querySelector("[data-role=view]")
+				self.__pullup = self.__container.querySelector("[data-role=pullup]")
 				
 			  self.__callback = function (top) {
 			    const distance = -top * self.dpr
-			    component.style.webkitTransform = 'translate3d(0, ' + distance + 'px, 0)'
-			    component.style.transform = 'translate3d(0, ' + distance + 'px, 0)'
+			    self.__component.style.webkitTransform = 'translate3d(0, ' + distance + 'px, 0)'
+			    self.__component.style.transform = 'translate3d(0, ' + distance + 'px, 0)'
 			  }
-				const rect = component.getBoundingClientRect()
-			  const viewRect = view.getBoundingClientRect()
-				const pulldownRect = pulldown.getBoundingClientRect()
-			  const pullupRect = pullup.getBoundingClientRect()
-				const root = self.__container.getBoundingClientRect()
-				self.__setDimensions(root.height,viewRect.height,pulldownRect.height,pullupRect.height)
-				self.__scrollPosition = 0;
+				self.refresh()
+				
 			  const touchStartHandler = function (e) {
 			    if (e.target.tagName.match(/input|textarea|select/i)) {
 			      return
@@ -83,6 +76,10 @@ function easeInOutCubic (pos) {
 			  const touchEndHandler = function (e) {
 			    self.__TouchEnd(e.timeStamp)
 			  }
+				const resizeHandler = function () {
+					console.log(567)
+					
+				}
 				const willPreventDefault = true;
 			  component.addEventListener('touchstart', touchStartHandler, willPreventDefault)
 			  component.addEventListener('touchmove', touchMoveHandler, willPreventDefault)
@@ -90,6 +87,22 @@ function easeInOutCubic (pos) {
 				component.addEventListener('mousedown', touchStartHandler, willPreventDefault)
 				component.addEventListener('mousemove', touchMoveHandler, willPreventDefault)
 				component.addEventListener('mouseup', touchEndHandler, willPreventDefault)
+				const observer = new MutationObserver(function(mutations) {
+				  self.refresh()
+				});
+				observer.observe(component, {
+				  childList: true,
+				  subtree: true,
+				});
+		}
+		refresh(){
+			const self = this;
+			const rect = self.__component.getBoundingClientRect()
+			const viewRect = self.__view.getBoundingClientRect()
+			const pulldownRect = self.__pulldown.getBoundingClientRect()
+			const pullupRect = self.__pullup.getBoundingClientRect()
+			const root = self.__container.getBoundingClientRect()
+			self.__setDimensions(root.height,viewRect.height,pulldownRect.height,pullupRect.height)
 		}
 		__scrollingComplete(){
 			
@@ -111,10 +124,10 @@ function easeInOutCubic (pos) {
 		  }
 			top = Math.max(Math.min(self.__maxDistance, top), self.__minDistance)
 			if(self.__scrollPosition <= self.__minScrollDistance){
-				console.log("下拉")
+				self.options.pulldown.call(self)
 			}
 			if(self.__scrollPosition >= self.__maxScrollDistance){
-				console.log("上拉")
+				self.options.pullup.call(self)
 			}
 			
 		  self.__publish(top, 300);
