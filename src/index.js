@@ -39,6 +39,9 @@ const MutationObserver = window.MutationObserver || window.WebKitMutationObserve
 				self.__interruptedAnimation = false;
 				self.__decelerationVelocity = 0;
 				self.__didDecelerationComplete = false;
+				self.__isitSurePullup = true;
+				self.__noLonger = true;
+				self.__releaseRefresh = function(){};
 				self.value = "";
 			  self.dpr = 1;
 			  options = options || {}
@@ -46,14 +49,16 @@ const MutationObserver = window.MutationObserver || window.WebKitMutationObserve
 			    itemClass: options.itemClass || 'scroller-item',
 			    pulldown :options.pulldowncallBack||function(){},
 			    pullup :options.pullupcallBack||function(){},
+					pulldownDelayed : options.pulldownDelayed || 300,
+					pullupDelayed : options.pullupDelayed || 300,
 			  }
-			
+				
 			  self.__container = getElement(container)
 			  const component = self.__component = self.__container.querySelector("[data-role=component]")
 				self.__pulldown = self.__container.querySelector("[data-role=pulldown]")
 				self.__view = self.__container.querySelector("[data-role=view]")
 				self.__pullup = self.__container.querySelector("[data-role=pullup]")
-				
+				self.__rot = document.getElementById("rot")
 			  self.__callback = function (top) {
 			    const distance = -top * self.dpr
 			    self.__component.style.webkitTransform = 'translate3d(0, ' + distance + 'px, 0)'
@@ -76,10 +81,7 @@ const MutationObserver = window.MutationObserver || window.WebKitMutationObserve
 			  const touchEndHandler = function (e) {
 			    self.__TouchEnd(e.timeStamp)
 			  }
-				const resizeHandler = function () {
-					console.log(567)
-					
-				}
+				
 				const willPreventDefault = true;
 			  component.addEventListener('touchstart', touchStartHandler, willPreventDefault)
 			  component.addEventListener('touchmove', touchMoveHandler, willPreventDefault)
@@ -94,6 +96,16 @@ const MutationObserver = window.MutationObserver || window.WebKitMutationObserve
 				  childList: true,
 				  subtree: true,
 				});
+				
+		}
+		manualRefresh(){
+			//对外暴露手动刷新方法
+			const self = this;
+			self.__scrollPosition = -self.__pulldown.getBoundingClientRect().height;
+			self.__scrollTo (self.__scrollPosition,true) 
+		}
+		releaseRefresh(){
+			this.__releaseRefresh();
 		}
 		refresh(){
 			const self = this;
@@ -107,6 +119,25 @@ const MutationObserver = window.MutationObserver || window.WebKitMutationObserve
 		__scrollingComplete(){
 			
 		}
+		__pulldownRotlote(angle,status){
+			const self = this;
+			if(status === 'move'){
+				if(Math.abs(angle)<self.__pulldown.getBoundingClientRect().height){
+					angle *= 5
+					this.__rot.style.transform = "rotate("+angle+"deg)"
+				}
+				return;
+			}
+			if(status === 'end'){
+				if(angle<0 && Math.abs(angle)>self.__pulldown.getBoundingClientRect().height){
+					this.__rot.classList.add("name")
+				}else{
+					this.__rot.classList.remove("name")
+				}
+				return;
+			}
+			
+		}
 		__setDimensions (rootHeight,viewHeight,pulldownHeight,pullupHeight) {
 			const self = this;
 		  self.__contentHeight = viewHeight
@@ -114,23 +145,38 @@ const MutationObserver = window.MutationObserver || window.WebKitMutationObserve
 			self.__maxDistance = viewHeight - rootHeight
 		  self.__minScrollDistance = -pulldownHeight
 		  self.__maxScrollDistance = viewHeight - rootHeight + pullupHeight
+			if(rootHeight > viewHeight){
+				//当内容高度小于容器高度，禁止上拉
+				self.__isitSurePullup = false;
+			}
 		}
 		__scrollTo (top, animate) {
 		  const self = this;
-		  		
 		  if (self.__isDecelerating) {
 		    Animate.stop(self.__isDecelerating)
 		    self.__isDecelerating = false
 		  }
 			top = Math.max(Math.min(self.__maxDistance, top), self.__minDistance)
-			if(self.__scrollPosition <= self.__minScrollDistance){
-				self.options.pulldown.call(self)
-			}
-			if(self.__scrollPosition >= self.__maxScrollDistance){
-				self.options.pullup.call(self)
-			}
-			
-		  self.__publish(top, 300);
+			new Promise(res=>{
+				/* if(animate){
+					console.log(1)
+					setTimeout(res,300)
+				}else{
+					console.log(2)
+					res()
+				} */
+				res()
+			}).then(function(){
+				if(self.__scrollPosition <= self.__minScrollDistance){
+								self.options.pulldown.call(self)
+							}
+							if(self.__scrollPosition >= self.__maxScrollDistance && !self.__noLonger){
+								console.log("上拉刷新")
+								self.options.pullup.call(self)
+							}
+							
+				self.__publish(top, 300);
+			})
 		  
 		}
 		__TouchStart(ev,timeStamp){
@@ -157,7 +203,6 @@ const MutationObserver = window.MutationObserver || window.WebKitMutationObserve
 			} else {
 			  currentTouchPosition = Math.abs(target.pageY + touches[1].pageY) / 2
 			}
-			
 			self.__positions = [];
 			self.__initialTouchPosition = currentTouchPosition;
 			self.__lastTouchPosition = currentTouchPosition;
@@ -167,12 +212,14 @@ const MutationObserver = window.MutationObserver || window.WebKitMutationObserve
 			self.__isDragging = !isSingleTouch;
 			self.__enableScrollPosition = !isSingleTouch;
 			self.__didDecelerationComplete = false;
+			self.__noLonger = true;
 		}
 		__TouchMove(ev,timeStamp){
 			const self = this;
 			const touches = ev.touches;
 			const target = ev.touches ? ev.touches[0] : ev;
 			const isMobile = !!ev.touches;
+			const moveAddDistance = 100;
 			if(!self.__isTracking){
 				return 
 			}
@@ -183,10 +230,13 @@ const MutationObserver = window.MutationObserver || window.WebKitMutationObserve
 			  currentTouchPosition = target.pageY
 			}
 			const positions = self.__positions;
-			
+			if(!self.__isitSurePullup && currentTouchPosition - self.__initialTouchPosition<0){
+				self.__noLonger = false;
+				return
+			}
 			if(self.__isDragging){
 				let moveDistance = currentTouchPosition - self.__lastTouchPosition;
-				let scrollPosition = this.__scrollPosition;
+				let scrollPosition = self.__scrollPosition;
 				const minDistance = self.__minDistance;
 				const maxDistance = self.__maxDistance;
 				if(scrollPosition < minDistance || scrollPosition > maxDistance){
@@ -194,15 +244,16 @@ const MutationObserver = window.MutationObserver || window.WebKitMutationObserve
 				}
 				if(self.__enableScrollPosition){
 					scrollPosition -= moveDistance;
+					if(scrollPosition<0){
+						self.__pulldownRotlote(scrollPosition,'move')
+					}
+					const minScrollDistance = self.__minScrollDistance - moveAddDistance;
+					const maxScrollDistance = self.__maxScrollDistance + moveAddDistance;
 					
-					const minScrollDistance = self.__minScrollDistance;
-					const maxScrollDistance = self.__maxScrollDistance;
-					
-					
-					if(scrollPosition < minScrollDistance){
+					if(scrollPosition < minScrollDistance ){
 						scrollPosition = minScrollDistance;
 					}
-					if(scrollPosition > maxScrollDistance){
+					if(scrollPosition > maxScrollDistance && !self.__noLonger){
 						scrollPosition = maxScrollDistance;
 					}
 					
@@ -237,34 +288,47 @@ const MutationObserver = window.MutationObserver || window.WebKitMutationObserve
 			  return
 			}
 			self.__isTracking = false;
+			if(!self.__noLonger){
+				return;
+			}
 			
-			if (self.__isDragging) {
-				self.__isDragging = false;
-				if (self.__isSingleTouch && (timeStamp - self.__lastTouchMoveTimeStamp) <= 100) {
-					const positions = self.__positions;
-					const endPos = positions.length - 1;
-					let startPos = endPos;
-			
-					for (let i = endPos; i > 0 && positions[i] + 100 > self.__lastTouchMoveTimeStamp; i -= 2) {
-					  startPos = i
-					}
-					if (startPos !== endPos) {
-					  const timeOffset = positions[endPos] - positions[startPos];
-					  
-					  const movedDistance = self.__scrollPosition - positions[startPos - 1]
-					  self.__decelerationVelocity = movedDistance / timeOffset * (1000 / 60)
-					  const minVelocityToStartDeceleration = 4
-					  if (Math.abs(self.__decelerationVelocity) > minVelocityToStartDeceleration) {
-					    self.__startDeceleration(timeStamp)
-					  }
+			new Promise(res=>{
+				res()
+				/* if(self.__scrollPosition < 0){
+					self.__pulldownRotlote(self.__scrollPosition,'end')
+					setTimeout(res,self.options.pulldownDelayed)
+				}else{
+					res()
+				} */
+			}).then(function(){
+				if (self.__isDragging) {
+					self.__isDragging = false;
+					if (self.__isSingleTouch && (timeStamp - self.__lastTouchMoveTimeStamp) <= 100) {
+						const positions = self.__positions;
+						const endPos = positions.length - 1;
+						let startPos = endPos;
+				
+						for (let i = endPos; i > 0 && positions[i] + 100 > self.__lastTouchMoveTimeStamp; i -= 2) {
+						  startPos = i
+						}
+						if (startPos !== endPos) {
+						  const timeOffset = positions[endPos] - positions[startPos];
+						  
+						  const movedDistance = self.__scrollPosition - positions[startPos - 1]
+						  self.__decelerationVelocity = movedDistance / timeOffset * (1000 / 60)
+						  const minVelocityToStartDeceleration = 4
+						  if (Math.abs(self.__decelerationVelocity) > minVelocityToStartDeceleration) {
+						    self.__startDeceleration(timeStamp)
+						  }
+						}
 					}
 				}
-			}
-			
-			
-			if (!self.__isDecelerating) {
-			  self.__scrollTo(self.__scrollPosition)
-			}
+				
+				
+				if (!self.__isDecelerating) {
+				  self.__scrollTo(self.__scrollPosition,true)
+				}
+			})
 			
 		}
 		__startDeceleration (timeStamp) {
@@ -287,7 +351,7 @@ const MutationObserver = window.MutationObserver || window.WebKitMutationObserve
 			var completed = function (animationId, wasFinished) {
 			  self.__isDecelerating = false
 			  if (self.__scrollPosition <= self.__minDistance || self.__scrollPosition >= self.__maxDistance) {
-			    self.__scrollTo(self.__scrollPosition)
+			    self.__scrollTo(self.__scrollPosition,true)
 			    return
 			  }
 			  if (self.__didDecelerationComplete) {
@@ -308,7 +372,7 @@ const MutationObserver = window.MutationObserver || window.WebKitMutationObserve
 			const minDistance = self.__minDistance;
 			const maxDistance = self.__maxDistance;
 			if(scrollDistance < minDistance || scrollDistance > maxDistance){
-				self.__decelerationVelocity *= 0.6
+				//self.__decelerationVelocity *= 0.6
 			}
 			if (Math.abs(self.__decelerationVelocity) <= 0.5) {
 			  self.__decelerationVelocity = 0
@@ -327,7 +391,7 @@ const MutationObserver = window.MutationObserver || window.WebKitMutationObserve
 				
 				var step = function (percent) {
 				  self.__scrollPosition = oldDistance + (diffDistance * percent)
-				  // Push values out
+				  self.__pulldownRotlote(self.__scrollPosition,'end')
 				  if (self.__callback) {
 				    self.__callback(self.__scrollPosition)
 				  }

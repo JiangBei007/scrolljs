@@ -16,21 +16,28 @@
 			#root{
 				height: 100%;
 				width: 100%;
-				overflow: scroll;
+				overflow: hidden;
 			}
 			#root .scroller-component{
-				overflow: hidden;
-				margin-top: -100px;
+				position: relative;
 			}
 			#root .scroller-component .scroller-pulldown{
-				height: 100px;
+				height: 60px;
 				line-height: 100px;
 				text-align: center;
+				position: absolute;
+				left: 0;
+				top: -60px;
+				width: 100%;
 			}
 			#root .scroller-component .scroller-pullup{
 				height: 100px;
 				line-height: 100px;
 				text-align: center;
+				position: absolute;
+				left: 0;
+				bottom: -100px;
+				width: 100%;
 			}
 			#root .scroller-component .scroller-view{
 				
@@ -42,12 +49,33 @@
 				border-top: 1px solid #3399CC;
 				border-bottom: 1px solid #3399CC;
 			}
+			#btn{
+				position: fixed;
+				right: 0;
+				bottom: 0;
+			}
+			#btnRre{
+				position: fixed;
+				right: 0;
+				bottom: 20px;
+			}
+			.name{
+				animation: kname 0.1s 0s infinite;
+			}
+			@keyframes kname{
+				from{
+					transform: rotate(0deg);
+				}
+				to{transform: rotate(360deg);}
+			}
 		</style>
 	</head>
 	<body>
 		<div id="root">
 			<div class="scroller-component" data-role="component">
-			  <div class="scroller-pulldown" data-role="pulldown">下拉刷新</div>
+			  <div class="scroller-pulldown" data-role="pulldown">
+				  <img id="rot" src="static/img/rea.png"/>
+			  </div>
 			  <div class="scroller-view" data-role="view">
 				  <ul id="uu">
 					  <li>1</li>
@@ -60,40 +88,44 @@
 					  <li>8</li>
 					  <li>9</li>
 					  <li>10</li>
-					   <li>11</li>
+					  <li>11</li>
 					  <li>12</li>
 					  <li>13</li>
 					  <li>14</li>
 					  <li>15</li>
 					  <li>16</li>
-					  <li>17</li>
-					  <li>18</li>
-					  <li>19</li>
-					  <li>20</li>
 				  </ul>
 			  </div>
 			  <div class="scroller-pullup" data-role="pullup">上拉加载</div>
 			</div>
 		</div>
-		
+		<button id="btn">手动刷新</button>
+		<button id="btnRre">释放</button>
 	</body>
 	<script>
 		const uu = document.getElementById("uu");
 		window.onload = function(){
-			new Scroll("#root",{
+			const sc = new Scroll("#root",{
 				pulldowncallBack(){
-					console.log(123)
+					//console.log(123)
 				},
 				pullupcallBack(){
 					const li = document.createElement("li");
 					li.innerHTML = 1;
 					for (let i=0;i<3;i++) {
-						console.log()
+						console.log(121212)
 						uu.appendChild(li)
 					}
-					this.refresh()
 				}
 			})
+			
+			
+			document.getElementById("btn").onclick = function () {
+				sc.manualRefresh()
+			}
+			document.getElementById("btnRre").onclick = function () {
+				sc.releaseRefresh()
+			}
 		}
 	</script>
 </html>
