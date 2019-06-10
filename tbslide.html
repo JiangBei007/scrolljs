@@ -22,13 +22,19 @@
 				position: relative;
 			}
 			#root .scroller-component .scroller-pulldown{
-				height: 60px;
+				height: 100px;
 				line-height: 100px;
 				text-align: center;
 				position: absolute;
 				left: 0;
-				top: -60px;
+				top: -100px;
 				width: 100%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			#root .scroller-component .scroller-pulldown img{
+				
 			}
 			#root .scroller-component .scroller-pullup{
 				height: 100px;
@@ -38,6 +44,9 @@
 				left: 0;
 				bottom: -100px;
 				width: 100%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
 			}
 			#root .scroller-component .scroller-view{
 				
@@ -60,7 +69,7 @@
 				bottom: 20px;
 			}
 			.name{
-				animation: kname 0.1s 0s infinite;
+				animation: kname 0.05s 0s infinite;
 			}
 			@keyframes kname{
 				from{
@@ -96,7 +105,9 @@
 					  <li>16</li>
 				  </ul>
 			  </div>
-			  <div class="scroller-pullup" data-role="pullup">上拉加载</div>
+			  <div class="scroller-pullup" data-role="pullup">
+				  <img id="loadicon" src="static/img/Loading.png"/>
+			  </div>
 			</div>
 		</div>
 		<button id="btn">手动刷新</button>
@@ -106,6 +117,8 @@
 		const uu = document.getElementById("uu");
 		window.onload = function(){
 			const sc = new Scroll("#root",{
+				handleRefresh:false,
+				handleLoad:true,
 				pulldowncallBack(){
 					//console.log(123)
 				},
@@ -113,7 +126,6 @@
 					const li = document.createElement("li");
 					li.innerHTML = 1;
 					for (let i=0;i<3;i++) {
-						console.log(121212)
 						uu.appendChild(li)
 					}
 				}
@@ -122,9 +134,11 @@
 			
 			document.getElementById("btn").onclick = function () {
 				sc.manualRefresh()
+				
 			}
 			document.getElementById("btnRre").onclick = function () {
 				sc.releaseRefresh()
+				sc.releaseLoad()
 			}
 		}
 	</script>
