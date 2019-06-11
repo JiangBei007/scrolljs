@@ -40,7 +40,6 @@ const MutationObserver = window.MutationObserver || window.WebKitMutationObserve
 				self.__decelerationVelocity = 0;
 				self.__didDecelerationComplete = false;
 				self.__isitSurePullup = true;
-				self.__noLonger = true;
 				self.__releaseRefresh = function(){};
 				this.__releaseLoad = function(){}
 			  self.dpr = 1;
@@ -81,7 +80,7 @@ const MutationObserver = window.MutationObserver || window.WebKitMutationObserve
 			  }
 			
 			  const touchEndHandler = function (e) {
-			    self.__TouchEnd(e.timeStamp)
+			    self.__TouchEnd(e,e.timeStamp)
 			  }
 				
 				const willPreventDefault = true;
@@ -129,6 +128,7 @@ const MutationObserver = window.MutationObserver || window.WebKitMutationObserve
 		}
 		__pulldownRotlote(angle,pull){
 			const self = this;
+			angle = -angle
 			if(pull = "pullDown"){
 				if(Math.abs(angle)<self.__pulldown.getBoundingClientRect().height){
 					angle *= 5
@@ -161,7 +161,7 @@ const MutationObserver = window.MutationObserver || window.WebKitMutationObserve
 			
 			new Promise(res=>{
 				const down = self.__scrollPosition <= self.__minScrollDistance;
-				const up = self.__scrollPosition >= self.__maxScrollDistance;
+				const up = self.__scrollPosition >= self.__maxScrollDistance && self.__isitSurePullup;
 				if( down || up){
 						new Promise(resolve=>{
 							if(down){
@@ -183,12 +183,10 @@ const MutationObserver = window.MutationObserver || window.WebKitMutationObserve
 						}).then(function(){
 							res()
 							if(down){
-								console.log("下拉刷新")
 								self.__rot.classList.remove("name")
 								self.options.pulldown.call(self)
 							}
 							if(up){
-								console.log("上拉加载")
 								self.__lod.classList.remove("name")
 								self.options.pullup.call(self)
 							}
@@ -256,9 +254,9 @@ const MutationObserver = window.MutationObserver || window.WebKitMutationObserve
 			}
 			const positions = self.__positions;
 			if(!self.__isitSurePullup && currentTouchPosition - self.__initialTouchPosition<0){
-				self.__noLonger = false;
 				return
 			}
+			
 			if(self.__isDragging){
 				let moveDistance = currentTouchPosition - self.__lastTouchPosition;
 				let scrollPosition = self.__scrollPosition;
@@ -274,11 +272,10 @@ const MutationObserver = window.MutationObserver || window.WebKitMutationObserve
 					}
 					const minScrollDistance = self.__minScrollDistance //- moveAddDistance;
 					const maxScrollDistance = self.__maxScrollDistance //+ moveAddDistance;
-					
-					if(scrollPosition < minScrollDistance ){
+					if(scrollPosition < minScrollDistance){
 						scrollPosition = minScrollDistance;
 					}
-					if(scrollPosition > maxScrollDistance){
+					if(scrollPosition > maxScrollDistance && self.__isitSurePullup){
 						scrollPosition = maxScrollDistance;
 					}
 					
@@ -307,16 +304,26 @@ const MutationObserver = window.MutationObserver || window.WebKitMutationObserve
 			self.__lastTouchMoveTimeStamp = timeStamp;
 			self.__lastTouchPosition = currentTouchPosition;
 		}
-		__TouchEnd(timeStamp){
+		__TouchEnd(ev,timeStamp){
 			const self = this;
+			const touches = ev.changedTouches;
+			const target = ev.changedTouches ? ev.changedTouches[0] : ev;
+			const isMobile = !!ev.changedTouches;
+			
 			if (!self.__isTracking) {
 			  return
 			}
 			self.__isTracking = false;
-			if(!self.__noLonger){
+			
+			var currentTouchPosition;
+			if (isMobile && touches.length === 2) {
+			  currentTouchPosition = Math.abs(target.pageY + touches[1].pageY) / 2
+			} else {
+			  currentTouchPosition = target.pageY
+			}
+			if(!self.__isitSurePullup &&currentTouchPosition-self.__initialTouchPosition<0){
 				return;
 			}
-			
 				if (self.__isDragging) {
 					self.__isDragging = false;
 					if (self.__isSingleTouch && (timeStamp - self.__lastTouchMoveTimeStamp) <= 100) {

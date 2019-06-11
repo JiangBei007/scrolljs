@@ -69,7 +69,7 @@
 				bottom: 20px;
 			}
 			.name{
-				animation: kname 0.05s 0s infinite;
+				animation: kname 0.5s steps(12, end) infinite;
 			}
 			@keyframes kname{
 				from{
@@ -83,14 +83,14 @@
 		<div id="root">
 			<div class="scroller-component" data-role="component">
 			  <div class="scroller-pulldown" data-role="pulldown">
-				  <img id="rot" src="static/img/rea.png"/>
+				  <img id="rot" src="static/img/refresh.png"/>
 			  </div>
 			  <div class="scroller-view" data-role="view">
 				  <ul id="uu">
 					  <li>1</li>
 					  <li>2</li>
 					  <li>3</li>
-					  <li>4</li>
+					 <li>4</li>
 					  <li>5</li>
 					  <li>6</li>
 					  <li>7</li>
@@ -117,15 +117,16 @@
 		const uu = document.getElementById("uu");
 		window.onload = function(){
 			const sc = new Scroll("#root",{
-				handleRefresh:false,
+				handleRefresh:true,
 				handleLoad:true,
 				pulldowncallBack(){
 					//console.log(123)
 				},
 				pullupcallBack(){
-					const li = document.createElement("li");
-					li.innerHTML = 1;
+					
 					for (let i=0;i<3;i++) {
+						const li = document.createElement("li");
+						li.innerHTML = i;
 						uu.appendChild(li)
 					}
 				}
