@@ -117,8 +117,10 @@
 		const uu = document.getElementById("uu");
 		window.onload = function(){
 			const sc = new Scroll("#root",{
-				handleRefresh:true,
-				handleLoad:true,
+				handleRefresh:false,
+				handleLoad:false,
+				pullupDelayed:1000,
+				pulldownDelayed:1000,
 				pulldowncallBack(){
 					//console.log(123)
 				},
