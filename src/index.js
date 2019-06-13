@@ -107,19 +107,27 @@ class Scroll {
 						val = nvl
 						if(tagDown){
 							console.log("刷新")
+							self.__rot.classList.remove("name")
+							self.options.pulldown.call(self)
 							tagDown = false
 						}
 						if(tagUp){
 							console.log("加载")
+							self.__lod.classList.remove("name")
+							self.options.pullup.call(self)
 							tagUp = false
 						}
+						self.__pulldownRotlote(val)
 					}
 						
-					if(val === self.__minScrollDistance){
+					if(val === self.__minScrollDistance && !tagDown){
 						tagDown = true;
+						self.__rot.classList.add("name")
+						 
 					}
-					if(val === self.__maxScrollDistance){
+					if(val === self.__maxScrollDistance && !tagUp){
 						tagUp = true;
+						self.__lod.classList.add("name")
 					}
 					
 				},
@@ -157,18 +165,25 @@ class Scroll {
 	__scrollingComplete() {
 
 	}
-	__pulldownRotlote(angle, pull) {
+	__pulldownRotlote(angle) {
 		const self = this;
-		angle = -angle
-		if (pull = "pullDown") {
-			if (Math.abs(angle) < self.__pulldown.getBoundingClientRect().height) {
-				angle *= 5
-				this.__rot.style.transform = "rotate(" + angle + "deg)"
-			}
+		const min = self.__minDistance;
+		const max = self.__maxDistance;
+		const scrollmin = self.__minScrollDistance;
+		const scrollmax = self.__maxScrollDistance;
+		if(angle > min && angle < max)return;
+		const rotateFn = function(rotate,dom){
+			rotate = Math.abs(Math.round(rotate))*5
+			self[dom].style.transform = "rotate(" + rotate + "deg)"
 		}
-		if (pull = "pullUp") {
-
+		if ( angle <= min) {
+			rotateFn(angle,"__rot")
+			return;
 		}
+		if( angle >= max ){
+			rotateFn(angle-max,"__lod")
+		}
+		
 	}
 	__setDimensions(rootHeight, viewHeight, pulldownHeight, pullupHeight) {
 		const self = this;
@@ -195,7 +210,6 @@ class Scroll {
 			if (down || up) {
 				new Promise(resolve => {
 					if (down) {
-						self.__rot.classList.add("name")
 						if (self.options.handleRefresh) {
 							self.__releaseRefresh = resolve
 						} else {
@@ -203,7 +217,6 @@ class Scroll {
 						}
 					}
 					if (up) {
-						self.__lod.classList.add("name")
 						if (self.options.handleLoad) {
 							self.__releaseLoad = resolve
 						} else {
@@ -212,22 +225,11 @@ class Scroll {
 					}
 				}).then(function() {
 					res()
-					if (down) {
-						self.__rot.classList.remove("name")
-						self.options.pulldown.call(self)
-					}
-					if (up) {
-						self.__lod.classList.remove("name")
-						self.options.pullup.call(self)
-					}
 				})
 
 			} else {
-				self.__rot.classList.remove("name")
-				self.__lod.classList.remove("name")
 				res()
 			}
-			//self.__releaseRefresh = res
 
 		}).then(function() {
 			self.__publish(top, 300);
@@ -299,7 +301,7 @@ class Scroll {
 			if (self.__enableScrollPosition) {
 				scrollPosition -= moveDistance;
 				if (scrollPosition < 0) {
-					self.__pulldownRotlote(scrollPosition)
+					//self.__pulldownRotlote(scrollPosition)
 				}
 				const minScrollDistance = self.__minScrollDistance //- moveAddDistance;
 				const maxScrollDistance = self.__maxScrollDistance //+ moveAddDistance;
@@ -426,7 +428,7 @@ class Scroll {
 		const maxDistance = self.__maxDistance;
 		if (scrollDistance < minDistance || scrollDistance > maxDistance) {
 			if (scrollDistance < minDistance) {
-				self.__pulldownRotlote(scrollDistance, "pullDown")
+				//self.__pulldownRotlote(scrollDistance, "pullDown")
 			}
 			self.__decelerationVelocity *= 0.6
 		}
@@ -440,28 +442,26 @@ class Scroll {
 	}
 	__publish(top, animationDuration) {
 		const self = this;
-		var wasAnimating = self.__isAnimating
+		const wasAnimating = self.__isAnimating
 		if (animationDuration) {
-			var oldDistance = self.__scrollPosition
-			var diffDistance = top - oldDistance
-
-			var step = function(percent) {
+			const oldDistance = self.__scrollPosition
+			const diffDistance = top - oldDistance
+			const step = function(percent) {
 				self.__scrollPosition = oldDistance + (diffDistance * percent)
 				if (self.__callback) {
 					self.__callback(self.__scrollPosition)
 				}
 			}
 
-			var verify = function(id) {
+			const verify = function(id) {
 				return self.__isAnimating === id
 			}
 
-			var completed = function(animationId, wasFinished) {
+			const completed = function(animationId, wasFinished) {
 				if (animationId === self.__isAnimating) {
 					self.__isAnimating = false
 				}
 				if (self.__didDecelerationComplete || wasFinished) {
-
 					self.__scrollingComplete()
 				}
 			}

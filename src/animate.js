@@ -82,6 +82,7 @@ export default {
 
 			if (!running[id] || (verifyCallback && !verifyCallback(id))) {
 				running[id] = null
+				
 				completedCallback && completedCallback( id,false)
 				return
 			}
@@ -92,7 +93,6 @@ export default {
 					percent = 1
 				}
 			}
-
 			var value = easingMethod ? easingMethod(percent) : percent;
 			if (stepCallback(value, now, render) === false || percent === 1) {
 				running[id] = null
