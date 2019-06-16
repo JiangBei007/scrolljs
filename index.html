@@ -1,12 +1,180 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<meta charset="UTF-8">
-		<title>我是首页</title>
-		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+		<meta charset="utf-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+		<style>
+			*{
+				margin: 0;
+				padding: 0;
+			}
+			html,body{
+				height: 100%;
+				width: 100%;
+			}
+			#root{
+				height: 100%;
+				width: 100%;
+				overflow: hidden;
+			}
+			#root .scroller-component{
+				position: relative;
+			}
+			#root .scroller-component .scroller-pulldown{
+				height: 80px;
+				line-height: 80px;
+				text-align: center;
+				position: absolute;
+				left: 0;
+				top: -80px;
+				width: 100%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			#root .scroller-component .scroller-pulldown [data-role="pulldown-icon"]{
+				background: url(static/img/refresh.png) no-repeat center;
+				background-size: 100%;
+				height: 30px;
+				width: 30px;
+				display: block;
+			}
+			#root .scroller-component .scroller-pulldown [data-role="pulldown-text"]{
+				font-size: 16px;
+				color: #888;
+				transition: all 0.3s;
+				width: 110px;
+				text-align: center;
+			}
+			#root .scroller-component .scroller-pullup{
+				height: 80px;
+				line-height: 80px;
+				text-align: center;
+				position: absolute;
+				left: 0;
+				bottom: -80px;
+				width: 100%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			#root .scroller-component .scroller-pullup [data-role="pullup-icon"]{
+				background: url(static/img/refresh.png) no-repeat center;
+				background-size: 100%;
+				height: 30px;
+				width: 30px;
+				display: block;
+			}
+			#root .scroller-component .scroller-pullup [data-role="pullup-text"]{
+				font-size: 16px;
+				color: #888;
+				transition: all 0.3s;
+				width: 110px;
+				text-align: center;
+			}
+			#root .scroller-component .scroller-view li{
+				height: 100px;
+				line-height: 100px;
+				text-align: center;
+				border-top: 1px solid #3399CC;
+				border-bottom: 1px solid #3399CC;
+			}
+			#btn{
+				position: fixed;
+				right: 0;
+				bottom: 0;
+			}
+			#btnRre{
+				position: fixed;
+				right: 0;
+				bottom: 20px;
+			}
+			.pulldownEndout{
+				animation: kname 0.5s steps(12, end) infinite;
+			}
+			.pullupEndout{
+				animation: kname 0.5s steps(12, end) infinite;
+			}
+			@keyframes kname{
+				from{
+					transform: rotate(0deg);
+				}
+				to{transform: rotate(360deg);}
+			}
+		</style>
 	</head>
 	<body>
-		<div id="app"></div>
+		<div id="root">
+			<div class="scroller-component" data-role="component">
+			  <div class="scroller-pulldown" data-role="pulldown">
+				  <div data-role="pulldown-icon"></div>
+				  <div data-role="pulldown-text"></div>
+			  </div>
+			  <div class="scroller-view" data-role="view">
+				  <ul id="uu">
+					  <li>1</li>
+					  <li>2</li>
+					  <li>3</li>
+					 <li>4</li>
+					  <li>5</li>
+					  <li>6</li>
+					  <li>7</li>
+					  <li>8</li>
+					  <li>9</li>
+					  <li>10</li>
+					  <li>11</li>
+					  <li>12</li>
+					  <li>13</li>
+					  <li>14</li>
+					  <li>15</li>
+					  <li>16</li>
+				  </ul>
+			  </div>
+			  <div class="scroller-pullup" data-role="pullup">
+				  <div data-role="pullup-icon"></div>
+				  <div data-role="pullup-text"></div>
+			  </div>
+			</div>
+		</div>
+		<button id="btnRre">释放</button>
 	</body>
+	<script>
+		const uu = document.getElementById("uu");
+		window.onload = function(){
+			const sc = new Scroll("#root",{
+				handleRefresh:false,
+				handleLoad:false,
+				pullupDelayed:1000,
+				pulldownDelayed:1000,
+				pulldownIngText: "下拉可以刷新",
+				pulldownSureText: "释放立即刷新",
+				pulldownEndoutText:"正在刷新中···",
+				pullupIngText: "上拉加载更多",
+				pullupSureText: "释放立即加载",
+				pullupEndoutText:"加载中···",
+				pulldowncallBack(){
+					console.log("刷新")
+				},
+				cancellablePulldownCallBack(){
+					console.log("可以取消的刷新")
+				},
+				pullupcallBack(){
+					for (let i=0;i<3;i++) {
+						const li = document.createElement("li");
+						li.innerHTML = i;
+						uu.appendChild(li)
+					}
+				},
+				cancellablePullupCallBack(){
+					console.log("可以取消的加载")
+				}
+			})
+			
+			document.getElementById("btnRre").onclick = function () {
+				sc.releaseRefresh()
+				sc.releaseLoad()
+			}
+		}
+	</script>
 </html>

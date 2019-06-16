@@ -15,18 +15,8 @@ module.exports = {
 	},
 	plugins: [
 		new HtmlWebpackPlugin({
-				filename: './fadeIn.html',
-				template: './fadeIn.html',
-				inject: true,
-			}),
-		new HtmlWebpackPlugin({
-				filename: './tbslide.html',
-				template: './tbslide.html',
-				inject: true,
-			}),
-		new HtmlWebpackPlugin({
-				filename: './lrslide.html',
-				template: './lrslide.html',
+				filename: './index.html',
+				template: './index.html',
 				inject: true,
 			}),
 		new FriendlyErrorsWebpackPlugin({

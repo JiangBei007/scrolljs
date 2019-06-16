@@ -41,17 +41,26 @@ class Scroll {
 		self.__decelerationVelocity = 0;
 		self.__didDecelerationComplete = false;
 		self.__isitSurePullup = true;
+		self.__isEnd = false;
 		self.__releaseRefresh = function() {};
-		this.__releaseLoad = function() {}
+		self.__releaseLoad = function() {}
 		self.dpr = 1;
 		options = options || {}
 		self.options = {
 			pulldown: options.pulldowncallBack || function() {},
+			cancellablePulldown: options.cancellablePulldownCallBack || function() {},
 			pullup: options.pullupcallBack || function() {},
+			cancellablePullup: options.cancellablePullupCallBack || function() {},
 			pulldownDelayed: options.pulldownDelayed || 500,
 			pullupDelayed: options.pullupDelayed || 500,
 			handleRefresh: options.handleRefresh || false,
 			handleLoad: options.handleLoad || false,
+			pulldownIngText: options.pulldownIngText || '',
+			pulldownSureText: options.pulldownSureText || '',
+			pulldownEndoutText: options.pulldownEndoutText || '',
+			pullupIngText: options.pullupIngText || '',
+			pullupSureText: options.pullupSureText || '',
+			pullupEndoutText: options.pullupEndoutText || '',
 		}
 
 		self.__container = getElement(container)
@@ -59,13 +68,17 @@ class Scroll {
 		self.__pulldown = self.__container.querySelector("[data-role=pulldown]")
 		self.__view = self.__container.querySelector("[data-role=view]")
 		self.__pullup = self.__container.querySelector("[data-role=pullup]")
-		self.__rot = document.getElementById("rot")
-		self.__lod = document.getElementById("loadicon")
+		self.__pulldownIcon = self.__container.querySelector("[data-role=pulldown-icon]")
+		self.__pulldownText = self.__container.querySelector("[data-role=pulldown-text]")
+		self.__pullupIcon = self.__container.querySelector("[data-role=pullup-icon]")
+		self.__pullupText = self.__container.querySelector("[data-role=pullup-text]")
 		self.__callback = function(top) {
 			const distance = -top * self.dpr
 			self.__component.style.webkitTransform = 'translate3d(0, ' + distance + 'px, 0)'
 			self.__component.style.transform = 'translate3d(0, ' + distance + 'px, 0)'
 		}
+		self.__pulldownText.innerText = self.options.pulldownIngText;
+		self.__pullupText.innerText = self.options.pullupIngText;
 		self.refresh()
 
 		const touchStartHandler = function(e) {
@@ -83,7 +96,7 @@ class Scroll {
 		const touchEndHandler = function(e) {
 			self.__TouchEnd(e, e.timeStamp)
 		}
-
+		
 		const willPreventDefault = true;
 		component.addEventListener('touchstart', touchStartHandler, willPreventDefault)
 		component.addEventListener('touchmove', touchMoveHandler, willPreventDefault)
@@ -106,28 +119,48 @@ class Scroll {
 					if(nvl !== val){
 						val = nvl
 						if(tagDown){
-							console.log("刷新")
-							self.__rot.classList.remove("name")
-							self.options.pulldown.call(self)
 							tagDown = false
+							self.__pulldownText.innerText = self.options.pulldownIngText
+							self.__pulldownIcon.classList.remove("pulldownEndout")
+							self.options.pulldown.call(self)
+							if(self.__isEnd){
+								self.options.cancellablePulldown.call(self)
+							}
+							
 						}
 						if(tagUp){
-							console.log("加载")
-							self.__lod.classList.remove("name")
-							self.options.pullup.call(self)
+							self.__pullupText.innerText = self.options.pullupIngText
+							self.__pullupIcon.classList.remove("pullupEndout")
 							tagUp = false
+							self.options.pullup.call(self)
+							if(self.__isEnd){
+								self.options.cancellablePullup.call(self)
+							}
 						}
 						self.__pulldownRotlote(val)
 					}
-						
-					if(val === self.__minScrollDistance && !tagDown){
-						tagDown = true;
-						self.__rot.classList.add("name")
-						 
+					
+					if(val === self.__minScrollDistance){
+						if(!tagDown){
+							tagDown = true;
+							self.__pulldownIcon.classList.add("onPulldown");
+							self.__pulldownText.innerText = self.options.pulldownSureText
+						}
+						if(self.__isEnd){
+							self.__pulldownIcon.classList.add("pulldownEndout")
+							self.__pulldownText.innerText = self.options.pulldownEndoutText
+						}	
 					}
-					if(val === self.__maxScrollDistance && !tagUp){
-						tagUp = true;
-						self.__lod.classList.add("name")
+					if(val === self.__maxScrollDistance){
+						if(!tagUp){
+							tagUp = true;
+							self.__pullupIcon.classList.add("onPullup")
+							self.__pullupText.innerText = self.options.pullupSureText
+						}
+						if(self.__isEnd){
+							self.__pullupIcon.classList.add("pullupEndout")
+							self.__pullupText.innerText = self.options.pullupEndoutText
+						}
 					}
 					
 				},
@@ -140,6 +173,7 @@ class Scroll {
 	}
 	manualRefresh() {
 		//对外暴露手动刷新方法
+		return;
 		const self = this;
 		self.__scrollPosition = self.__minScrollDistance;
 		self.__callback(self.__scrollPosition)
@@ -173,15 +207,15 @@ class Scroll {
 		const scrollmax = self.__maxScrollDistance;
 		if(angle > min && angle < max)return;
 		const rotateFn = function(rotate,dom){
-			rotate = Math.abs(Math.round(rotate))*5
+			rotate = Math.abs(Math.round(rotate))*3.6
 			self[dom].style.transform = "rotate(" + rotate + "deg)"
 		}
 		if ( angle <= min) {
-			rotateFn(angle,"__rot")
+			rotateFn(angle,"__pulldownIcon")
 			return;
 		}
 		if( angle >= max ){
-			rotateFn(angle-max,"__lod")
+			rotateFn(angle-max,"__pullupIcon")
 		}
 		
 	}
@@ -241,6 +275,7 @@ class Scroll {
 		const touches = ev.touches;
 		const target = ev.touches ? ev.touches[0] : ev;
 		const isMobile = !!ev.touches;
+		self.__isEnd = false;
 		if (self.__isDecelerating) {
 			Animate.stop(self.__isDecelerating)
 			self.__isDecelerating = false
@@ -347,7 +382,7 @@ class Scroll {
 			return
 		}
 		self.__isTracking = false;
-
+		self.__isEnd = true;
 		var currentTouchPosition;
 		if (isMobile && touches.length === 2) {
 			currentTouchPosition = Math.abs(target.pageY + touches[1].pageY) / 2
@@ -357,6 +392,7 @@ class Scroll {
 		if (!self.__isitSurePullup && currentTouchPosition - self.__initialTouchPosition < 0) {
 			return;
 		}
+		self.__scrollPosition = self.__scrollPosition;
 		if (self.__isDragging) {
 			self.__isDragging = false;
 			if (self.__isSingleTouch && (timeStamp - self.__lastTouchMoveTimeStamp) <= 100) {
